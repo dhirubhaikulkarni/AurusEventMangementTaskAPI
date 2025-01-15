@@ -25,7 +25,7 @@ router.get("/usersDetails",Authentication, async (req, res) => {
         res.status(500).send("Failed");
     }
 });
-router.get("/getEvents", Authentication, async (req, res) => {
+router.get("/", Authentication, async (req, res) => {
     const page = parseInt(req.query.page) || 1; // Default page is 1 if not provided
     const limit = parseInt(req.query.limit) || 10; // Default limit is 10 items per page
     const searchTerm = req.query.searchTerm || ""; // Event name search
