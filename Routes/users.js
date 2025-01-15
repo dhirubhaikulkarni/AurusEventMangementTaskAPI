@@ -14,12 +14,6 @@ router.post("/register", async (req, res) => {
             return res.status(400).send("Email is already registered.");
         }
 
-        // Check if user with provided username exists
-        const existingUsernameUser = await users.findOne({ username: req.body.username });
-        if (existingUsernameUser) {
-            return res.status(400).send("Username is already taken.");
-        }
-
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(req.body.password, salt);
         const user = {

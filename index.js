@@ -9,6 +9,7 @@ const app = express();
 
 const users = require("./Routes/users");
 const auth = require("./Routes/auth");
+const event = require("./Routes/events");
 
 
 
@@ -30,6 +31,7 @@ app.use(function (req, res, next) {
 
 app.use("/api/users", users)
 app.use("/api/auth", auth)
+app.use("/api/events", event)
 
 
 
