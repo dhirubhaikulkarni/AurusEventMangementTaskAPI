@@ -25,48 +25,70 @@ router.get("/usersDetails",Authentication, async (req, res) => {
         res.status(500).send("Failed");
     }
 });
-router.get("/getEvents",Authentication, async (req, res) => {
+router.get("/getEvents", Authentication, async (req, res) => {
     const page = parseInt(req.query.page) || 1; // Default page is 1 if not provided
     const limit = parseInt(req.query.limit) || 10; // Default limit is 10 items per page
+    const searchTerm = req.query.searchTerm || ""; // Event name search
+    const startDate = req.query.startDate; // Start date filter
+    const endDate = req.query.endDate; // End date filter
 
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
         const events = await db.collection("Events");
-        // let result = await events.find().toArray();
-        let result = await events.aggregate([
-            {
-                $lookup: {
-                    from: "Users", // The collection to join with
-                    localField: "eventUser", // Field from the "Events" collection
-                    foreignField: "_id", // Field from the "Users" collection
-                    as: "userDetails" // The name of the new array field to be added
-                }
-            },
-            {
-                $lookup: {
-                    from: "EventTypes", // The collection to join with
-                    localField: "eventType", // Field from the "Events" collection
-                    foreignField: "_id", // Field from the "Categories" collection
-                    as: "categoryDetails" // The name of the new array field to be added
-                }
-            },
-            {
-                $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true } // Optional if you want to flatten the "userDetails" array
-            },
-            {
-                $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } // Optional if you want to flatten the "categoryDetails" array
-            },
-            {
-                $skip: (page - 1) * limit // Skip based on current page and limit
-            },
-            {
-                $limit: limit // Limit the number of events returned per page
+
+        // Build the match conditions dynamically
+        const matchConditions = {};
+
+        // Add search term condition if provided
+        if (searchTerm) {
+            matchConditions.title = { $regex: searchTerm, $options: "i" }; // Case-insensitive regex
+        }
+
+        // Add date range condition if provided
+        if (startDate || endDate) {
+            matchConditions.startDate = {};
+            if (startDate) {
+                matchConditions.startDate.$gte = new Date(startDate); // Greater than or equal to startDate
             }
+            if (endDate) {
+                matchConditions.startDate.$lte = new Date(endDate); // Less than or equal to endDate
+            }
+        }
 
-        ]).toArray();
+        // Aggregation pipeline with filtering and pagination
+        const pipeline = [
+            ...(Object.keys(matchConditions).length > 0 ? [{ $match: matchConditions }] : []), // Only add $match if filters exist
+            {
+                $lookup: {
+                    from: "Users",
+                    localField: "eventUser",
+                    foreignField: "_id",
+                    as: "userDetails"
+                }
+            },
+            {
+                $lookup: {
+                    from: "EventTypes",
+                    localField: "eventType",
+                    foreignField: "_id",
+                    as: "categoryDetails"
+                }
+            },
+            {
+                $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true }
+            },
+            {
+                $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true }
+            },
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+        ];
 
-        const totalEvents = await events.countDocuments();
+        const result = await events.aggregate(pipeline).toArray();
+
+        // Total documents count (with or without filters)
+        const totalEvents = await events.countDocuments(Object.keys(matchConditions).length > 0 ? matchConditions : {});
 
         res.status(200).send({
             result,
@@ -75,9 +97,11 @@ router.get("/getEvents",Authentication, async (req, res) => {
             currentPage: page
         });
     } catch (error) {
+        console.error("Error fetching events:", error);
         res.status(500).send("Failed");
     }
 });
+
 router.post("/createEvent",Authentication, async (req, res) => {
     try {
         const dbConnection = await global.clientConnection;
