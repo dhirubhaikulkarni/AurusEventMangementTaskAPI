@@ -1,0 +1,37 @@
+{
+  "name": "aurus_event_management_api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.20.0",
+    "base32-decode": "^1.0.0",
+    "base32-encode": "^1.1.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-locale": "^2.0.0",
+    "mongodb": "^6.5.0",
+    "nodemon": "^2.0.4",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.4",
+    "crypto": "^1.0.1",
+    "cryptr": "^6.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.0",
+    "babel-loader": "^9.1.2",
+    "webpack": "^5.52.0",
+    "webpack-cli": "^4.8.0",
+    "webpack-node-externals": "^3.0.0"
+  }
+}
