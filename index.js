@@ -34,7 +34,9 @@ app.use("/api/auth", auth)
 app.use("/api/events", event)
 
 
-
+app.get("/", (req, res) => {
+  res.send("Welcome to the Event Management API");
+});
 
 global.clientConnection = new MongoClient(process.env.MONGODB_CONNECT_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
