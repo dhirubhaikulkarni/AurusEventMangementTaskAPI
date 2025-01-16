@@ -82,7 +82,7 @@ router.get("/", Authentication, async (req, res) => {
             {
                 $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true }
             },
-            { $sort: { startDate: 1 } },
+            { $sort: { _id: -1 } },
             { $skip: (page - 1) * limit },
             { $limit: limit }
         ];
