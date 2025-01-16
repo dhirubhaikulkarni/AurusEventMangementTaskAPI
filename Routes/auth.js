@@ -15,7 +15,7 @@ router.post("/login", async (req, res) => {
         const db = await dbConnection.db("AurusCodeChallenge");
         const users = await db.collection("Users");
 
-        const user = await users.findOne({ email: req.body.email });
+        const user = await users.findOne({ email: req.body.email.toLowerCase() });
         if (!checkValueEmptyOrNull(user)) {
             return res.status(200).send({ error: { code: "Failed", message: "User Does Not Exist credentials" } });
         }

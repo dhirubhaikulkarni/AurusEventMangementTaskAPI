@@ -19,8 +19,9 @@ router.get("/usersDetails", Authentication, async (req, res) => {
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
-        const eventtypes = await db.collection("Users");
-        let result = await eventtypes.find().toArray();
+        const users = await db.collection("Users");
+        const query = { role: { $ne: "admin" } };
+        const result = await users.find(query).toArray();
         res.status(200).send(encryptData(result));
     } catch (error) {
         res.status(500).send("Failed");
@@ -32,7 +33,6 @@ router.get("/", Authentication, async (req, res) => {
     const searchTerm = req.query.searchTerm || ""; // Event name search
     const startDate = req.query.startDate; // Start date filter
     const endDate = req.query.endDate; // End date filter
-
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
@@ -82,6 +82,7 @@ router.get("/", Authentication, async (req, res) => {
             {
                 $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true }
             },
+            { $sort: { startDate: 1 } },
             { $skip: (page - 1) * limit },
             { $limit: limit }
         ];
@@ -165,12 +166,12 @@ router.put("/editEvent/:id", Authentication, async (req, res) => {
         const updatedPost = await Event.findOne({ _id: eventId });
         let data = {
             newData: updatedPost,
-            message: "Post Updated Successfully"
+            message: "Event Updated Successfully"
         }
         return res.status(200).send(encryptData(data));
 
     } catch (error) {
-        return res.status(500).send(encryptData("Failed to update post"));
+        return res.status(500).send(encryptData("Failed to update event"));
     }
 });
 
