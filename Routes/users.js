@@ -1,8 +1,10 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
+const { encryptData, decryptData } = require("../security/crypto");
 const ObjectID = require('mongodb').ObjectId;
 
 router.post("/register", async (req, res) => {
+    req.body = decryptData(req.body.data);
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
@@ -27,9 +29,13 @@ router.post("/register", async (req, res) => {
         };
 
         let result = await users.insertOne(user);
-        res.status(200).send("Success");
+        let data = {
+            result,
+            message: "User registered successfully"
+        }
+        res.status(200).send(encryptData(data));
     } catch (error) {
-        res.status(500).send("Failed");
+        res.status(500).send(encryptData(error));
     }
 });
 

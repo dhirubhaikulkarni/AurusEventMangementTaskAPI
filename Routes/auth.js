@@ -2,13 +2,14 @@ const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const ObjectID = require('mongodb').ObjectId;
 const jwt = require("jsonwebtoken");
-const { encrypt, decrypt } = require("../security/crypto");
+const { decryptData, encryptData } = require("../security/crypto");
 
 const checkValueEmptyOrNull = (value) => {
     return (value === undefined || value === null || value === "" || value === "NULL" || value === "null") ? false : true;
 }
 
 router.post("/login", async (req, res) => {
+    req.body = decryptData(req.body.data);
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
@@ -41,10 +42,10 @@ router.post("/login", async (req, res) => {
             user,
             token
         }
-        res.status(200).send(userData); // Send the user data on successful login
+
+        res.status(200).send(encryptData(userData)); // Send the user data on successful login
     } catch (error) {
-        console.error(error);
-        res.status(500).send("Failed");
+        res.status(500).send(encryptData(error));
     }
 });
 

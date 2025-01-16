@@ -1,26 +1,27 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const { Authentication } = require("../Authentication/Authentication");
+const { decryptData, encryptData } = require("../security/crypto");
 const ObjectID = require('mongodb').ObjectId;
 
-router.get("/eventType",Authentication, async (req, res) => {
+router.get("/eventType", Authentication, async (req, res) => {
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
         const eventtypes = await db.collection("EventTypes");
         let result = await eventtypes.find().toArray();
-        res.status(200).send(result);
+        res.status(200).send(encryptData(result));
     } catch (error) {
         res.status(500).send("Failed");
     }
 });
-router.get("/usersDetails",Authentication, async (req, res) => {
+router.get("/usersDetails", Authentication, async (req, res) => {
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
         const eventtypes = await db.collection("Users");
         let result = await eventtypes.find().toArray();
-        res.status(200).send(result);
+        res.status(200).send(encryptData(result));
     } catch (error) {
         res.status(500).send("Failed");
     }
@@ -89,20 +90,21 @@ router.get("/", Authentication, async (req, res) => {
 
         // Total documents count (with or without filters)
         const totalEvents = await events.countDocuments(Object.keys(matchConditions).length > 0 ? matchConditions : {});
-
-        res.status(200).send({
+        let data = {
             result,
             totalEvents,
             totalPages: Math.ceil(totalEvents / limit),
             currentPage: page
-        });
+        }
+        res.status(200).send(encryptData(data));
     } catch (error) {
         console.error("Error fetching events:", error);
         res.status(500).send("Failed");
     }
 });
 
-router.post("/createEvent",Authentication, async (req, res) => {
+router.post("/createEvent", Authentication, async (req, res) => {
+    req.body = decryptData(req.body.data);
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
@@ -121,14 +123,19 @@ router.post("/createEvent",Authentication, async (req, res) => {
         };
 
         let result = await Event.insertOne(EventData);
-        res.status(200).send("Success");
+        let data = {
+            result,
+            message: "Event Created successfully"
+        }
+        res.status(200).send(encryptData(data));
     } catch (error) {
         res.status(500).send("Failed");
     }
 });
 
-router.put("/editEvent/:id",Authentication, async (req, res) => {
+router.put("/editEvent/:id", Authentication, async (req, res) => {
     try {
+        req.body = decryptData(req.body.data);
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
         const Event = db.collection("Events");
@@ -156,31 +163,35 @@ router.put("/editEvent/:id",Authentication, async (req, res) => {
         );
 
         const updatedPost = await Event.findOne({ _id: eventId });
-
-        return res.status(200).send({ newData: updatedPost, message: "Post Updated Successfully" });
+        let data = {
+            newData: updatedPost,
+            message: "Post Updated Successfully"
+        }
+        return res.status(200).send(encryptData(data));
 
     } catch (error) {
-        console.error("Error updating post:", error);
-        res.status(500).send({ message: "Failed to update post" });
+        return res.status(500).send(encryptData("Failed to update post"));
     }
 });
 
-router.delete("/:_id",Authentication, async (req, res) => {
+router.delete("/:_id", Authentication, async (req, res) => {
     try {
         const dbConnection = await global.clientConnection;
         const db = await dbConnection.db("AurusCodeChallenge");
         const events = await db.collection("Events");
         const result = await events.deleteOne({ _id: new ObjectID(req.params._id) })
-
+        let data = {
+            message: "Post Updated Successfully"
+        }
         if (!result) {
-            return res.status(500).send({ data: { message: error.message } });
+            return res.status(500).send(encryptData(error.message));
         } else {
-            return res.status(200).send({ "message": "Events Deleted Successfully" });
+            return res.status(200).send(encryptData(data));
         }
     }
 
     catch (error) {
-        return res.status(500).send(encrypt(JSON.stringify({ data: { message: error.message } })));
+        return res.status(500).send(encryptData(error));
     }
 });
 
